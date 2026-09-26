@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+
 import '../models/horse_model.dart';
 import '../models/bet_model.dart';
 import '../models/race_result_model.dart';
@@ -56,9 +58,7 @@ class _RaceScreenState extends State<RaceScreen> {
 
   /// Khởi tạo lại vị trí xuất phát cho cả 3 ngựa
   void _resetTrack() {
-    _progressMap = {
-      for (var horse in widget.horses) horse.id: 0.0,
-    };
+    _progressMap = {for (var horse in widget.horses) horse.id: 0.0};
     _isRacing = false;
     _isFinished = false;
     _winnerHorse = null;
@@ -134,16 +134,38 @@ class _RaceScreenState extends State<RaceScreen> {
         }
 
         // Nếu đã có ngựa cán đích
+        // Thay thế đoạn điều hướng Navigator.push cũ bằng cách gọi hàm Popup tại chỗ:
         if (localWinner != null && !_isFinished) {
           _isFinished = true;
           _isRacing = false;
           _winnerHorse = localWinner;
           _raceTimer?.cancel();
 
-          // Chờ 1.2 giây để người chơi nhìn rõ khoảnh khắc cán đích rồi chuyển sang ResultScreen
-          Future.delayed(const Duration(milliseconds: 1400), () {
+          // Chờ 1.2 giây để người chơi nhìn rõ khoảnh khắc cán đích rồi show Popup lên đè màn hình
+          Future.delayed(const Duration(milliseconds: 1200), () {
             if (mounted) {
-              _navigateToResultScreen();
+              // 1. Tính toán logic tiền thưởng nhận được
+              final betOnWinner = _getBetForHorse(_winnerHorse!.id);
+              final totalBet = widget.bets.fold<int>(
+                0,
+                (sum, b) => sum + b.amount,
+              );
+              final payout = betOnWinner * 2; // Ví dụ tỷ lệ x2
+              final netProfit = payout - totalBet;
+              final finalBalance = widget.initialBalance + netProfit;
+
+              // 2. Gọi hàm popup UI
+              _showVictoryPopup(
+                context: context,
+                winnerHorse: _winnerHorse,
+                isUserWinner: payout > 0,
+                netProfit: netProfit,
+                finalBalance: finalBalance,
+                onPlayAgain: () {
+                  // Trả lại số tiền mới và quay về màn hình đặt cược chính
+                  Navigator.pop(context, finalBalance);
+                },
+              );
             }
           });
         }
@@ -174,9 +196,7 @@ class _RaceScreenState extends State<RaceScreen> {
     // Chuyển sang ResultScreen
     final updatedBalance = await Navigator.push<int>(
       context,
-      MaterialPageRoute(
-        builder: (context) => ResultScreen(raceResult: result),
-      ),
+      MaterialPageRoute(builder: (context) => ResultScreen(raceResult: result)),
     );
 
     // Khi người chơi chọn "Chơi tiếp" hoặc "Về trang chủ", pop trả số dư mới về HomeBettingScreen
@@ -244,14 +264,31 @@ class _RaceScreenState extends State<RaceScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.flag_rounded, color: Colors.white70, size: 16),
+                              Icon(
+                                Icons.flag_rounded,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
                               SizedBox(width: 4),
-                              Text('Vạch xuất phát', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              Text(
+                                'Vạch xuất phát',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                           Row(
                             children: [
-                              const Text('Vạch đích 🏁', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 12, fontWeight: FontWeight.bold)),
+                              const Text(
+                                'Vạch đích 🏁',
+                                style: TextStyle(
+                                  color: Color(0xFFFBBF24),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               const SizedBox(width: 4),
                               Container(
                                 width: 12,
@@ -300,7 +337,9 @@ class _RaceScreenState extends State<RaceScreen> {
                   shape: BoxShape.circle,
                   color: _isRacing
                       ? const Color(0xFF22C55E)
-                      : (_isFinished ? const Color(0xFFFBBF24) : const Color(0xFF94A3B8)),
+                      : (_isFinished
+                            ? const Color(0xFFFBBF24)
+                            : const Color(0xFF94A3B8)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -308,8 +347,10 @@ class _RaceScreenState extends State<RaceScreen> {
                 _isFinished
                     ? '🏆 CUỘC ĐUA KẾT THÚC!'
                     : (_isRacing
-                        ? '🔥 ĐANG SO KÈ QUYẾT LIỆT!'
-                        : (_countdown > 0 ? 'CHUẨN BỊ XUẤT PHÁT: $_countdown' : 'SẴN SÀNG XUẤT PHÁT')),
+                          ? '🔥 ĐANG SO KÈ QUYẾT LIỆT!'
+                          : (_countdown > 0
+                                ? 'CHUẨN BỊ XUẤT PHÁT: $_countdown'
+                                : 'SẴN SÀNG XUẤT PHÁT')),
                 style: TextStyle(
                   color: _isFinished
                       ? const Color(0xFFFBBF24)
@@ -324,7 +365,11 @@ class _RaceScreenState extends State<RaceScreen> {
           // Tổng tiền đang cược trong vòng này
           Row(
             children: [
-              const Icon(Icons.monetization_on, color: Color(0xFFFBBF24), size: 16),
+              const Icon(
+                Icons.monetization_on,
+                color: Color(0xFFFBBF24),
+                size: 16,
+              ),
               const SizedBox(width: 4),
               Text(
                 'Cược: ${widget.bets.fold<int>(0, (s, b) => s + b.amount)} xu',
@@ -360,13 +405,20 @@ class _RaceScreenState extends State<RaceScreen> {
                 onPressed: _countdown == 0 ? _startCountdown : null,
                 icon: const Icon(Icons.play_arrow_rounded, size: 28),
                 label: Text(
-                  _countdown > 0 ? 'XUẤT PHÁT TRONG $_countdown GIÂY...' : 'PHÁT LỆNH XUẤT PHÁT! 🚀',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  _countdown > 0
+                      ? 'XUẤT PHÁT TRONG $_countdown GIÂY...'
+                      : 'PHÁT LỆNH XUẤT PHÁT! 🚀',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 6,
                 ),
               ),
@@ -413,7 +465,9 @@ class _RaceScreenState extends State<RaceScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD97706),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 6,
                 ),
               ),
@@ -429,7 +483,10 @@ class _RaceScreenState extends State<RaceScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Hủy cuộc đua?', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Hủy cuộc đua?',
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
           'Cuộc đua đang diễn ra. Nếu rời khỏi màn hình bây giờ, kết quả vòng này sẽ bị hủy bỏ.',
           style: TextStyle(color: Color(0xFFCBD5E1)),
@@ -437,18 +494,214 @@ class _RaceScreenState extends State<RaceScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Ở lại', style: TextStyle(color: Color(0xFF38BDF8))),
+            child: const Text(
+              'Ở lại',
+              style: TextStyle(color: Color(0xFF38BDF8)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+            ),
             child: const Text('Rời đi', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
+    );
+  }
+
+  void _showVictoryPopup({
+    required BuildContext context,
+    required dynamic winnerHorse,
+    required bool isUserWinner,
+    required int netProfit,
+    required int finalBalance,
+    required VoidCallback onPlayAgain,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Bắt buộc chọn nút bấm mới đóng được popup
+      builder: (BuildContext ctx) {
+        return Dialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isUserWinner
+                    ? const Color(0xFFFFD700)
+                    : const Color(0xFF475569),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              mainAxisSize:
+                  MainAxisSize.min, // Kích thước ôm sát nội dung kiểu popup
+              children: [
+                // 1. Icon Cúp vàng vinh danh
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isUserWinner
+                        ? const Color(0xFFFFD700).withAlpha(30)
+                        : const Color(0xFF64748B).withAlpha(30),
+                  ),
+                  child: Icon(
+                    Icons.emoji_events_rounded,
+                    color: isUserWinner
+                        ? const Color(0xFFFFD700)
+                        : const Color(0xFF94A3B8),
+                    size: 56,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 2. Trạng thái Thắng / Thua
+                Text(
+                  isUserWinner
+                      ? '🎉 CHIẾN THẮNG RỰC RỠ! 🎉'
+                      : 'KẾT QUẢ VÒNG ĐUA',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isUserWinner
+                        ? const Color(0xFFFBBF24)
+                        : Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 3. Thông tin chiến mã về nhất
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: winnerHorse.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${winnerHorse.name} về Nhất',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 4. Biến động số dư xu của người chơi
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        const Text(
+                          'Biến động',
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isUserWinner ? '+$netProfit xu' : '$netProfit xu',
+                          style: TextStyle(
+                            color: isUserWinner
+                                ? const Color(0xFF4ADE80)
+                                : const Color(0xFFEF4444),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      width: 1,
+                      height: 30,
+                      color: const Color(0xFF334155),
+                    ),
+                    Column(
+                      children: [
+                        const Text(
+                          'Số dư mới',
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$finalBalance xu',
+                          style: const TextStyle(
+                            color: Color(0xFFFBBF24),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // 5. Nút bấm tương tác
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx); // Đóng popup kết quả trước
+                      onPlayAgain(); // Kích hoạt callback để tiếp tục hoặc thoát về trang cược
+                    },
+                    icon: const Icon(Icons.replay_rounded, color: Colors.white),
+                    label: const Text(
+                      'TIẾP TỤC TRẢI NGHIỆM 🏇',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
