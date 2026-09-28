@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:game_dua_ngua/main.dart';
-import 'package:game_dua_ngua/models/horse_model.dart';
 import 'package:game_dua_ngua/models/bet_model.dart';
 import 'package:game_dua_ngua/models/race_result_model.dart';
+import 'package:game_dua_ngua/models/horse_model.dart';
+import 'package:game_dua_ngua/screens/home_betting_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({
       'player_total_balance': 100,
     });
+  });
+
+  testWidgets('MiniRacingGameApp starts on LoginScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(const MiniRacingGameApp());
+
+    expect(find.text('MINI RACING'), findsOneWidget);
+    expect(find.text('ĐĂNG NHẬP'), findsOneWidget);
   });
 
   group('Module 2 & 3: Dart OOP & Settlement Logic Unit Tests', () {
@@ -80,7 +88,8 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
-      await tester.pumpWidget(const MiniRacingGameApp());
+      // HomeBettingScreen is tested directly because LoginScreen is now the app entry point.
+      await tester.pumpWidget(const MaterialApp(home: HomeBettingScreen()));
       // Nạp số dư từ SharedPreferences
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));

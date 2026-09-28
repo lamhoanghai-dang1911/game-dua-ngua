@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/home_betting_screen.dart';
+import 'screens/login_screen.dart';
 
 /// ============================================================================
 /// MINI RACING GAME – FLUTTER UI PROJECT (GAME ĐUA NGỰA)
@@ -75,7 +75,7 @@ class MiniRacingGameApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const HomeBettingScreen(),
+      home: const LoginScreen(),
     );
   }
 }
