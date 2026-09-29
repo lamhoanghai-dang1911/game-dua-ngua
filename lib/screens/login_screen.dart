@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/audio_service.dart';
 import 'home_betting_screen.dart';
 import 'register_screen.dart';
 
@@ -17,6 +18,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _registeredUsername;
   String? _registeredPassword;
+
+  @override
+  void initState() {
+    super.initState();
+    AudioService.instance.playLoginBgm();
+  }
 
   @override
   void dispose() {

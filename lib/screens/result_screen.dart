@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/race_result_model.dart';
+import '../services/audio_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/victory_badge.dart';
 
@@ -31,6 +32,8 @@ class _ResultScreenState extends State<ResultScreen> {
     _finalBalance = widget.raceResult.updatedBalance;
     // Tự động lưu số dư mới vào SharedPreferences / Local storage
     _saveBalance();
+    // Sau khi kết thúc và hiện trang kết quả -> nhạc crowd_cheering reo lên 1 lần
+    AudioService.instance.playCrowdCheering();
   }
 
   Future<void> _saveBalance() async {
@@ -41,6 +44,7 @@ class _ResultScreenState extends State<ResultScreen> {
   Future<void> _claimRelief() async {
     final newBalance = _finalBalance + 100;
     await StorageService.saveBalance(newBalance);
+    AudioService.instance.playMoneySound();
     setState(() {
       _finalBalance = newBalance;
     });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/audio_service.dart';
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -8,6 +9,12 @@ class DepositScreen extends StatefulWidget {
 }
 
 class _DepositScreenState extends State<DepositScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AudioService.instance.playBgm();
+  }
+
   // Danh sách các gói nạp xu demo
   final List<Map<String, dynamic>> _depositPackages = [
     {'coins': 50, 'price': '20.000đ', 'badge': 'Cơ bản'},
@@ -296,6 +303,7 @@ class _DepositScreenState extends State<DepositScreen> {
 
   // Dialog thông báo nạp thành công mô phỏng
   void _showSuccessDialog(int coins) {
+    AudioService.instance.playMoneySound();
     showDialog(
       context: context,
       barrierDismissible: false,

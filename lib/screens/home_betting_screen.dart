@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/horse_model.dart';
 import '../models/bet_model.dart';
+import '../services/audio_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/balance_header_card.dart';
 import '../widgets/horse_bet_tile.dart';
@@ -36,6 +37,7 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
   @override
   void initState() {
     super.initState();
+    AudioService.instance.playBgm();
     _horses = Horse.defaultHorses;
     // Khởi tạo tiền cược ban đầu = 0 cho cả 3 ngựa
     for (var horse in _horses) {
@@ -68,9 +70,15 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
 
   /// Cập nhật số tiền cược cho 1 ngựa cụ thể
   void _updateBet(int horseId, int newAmount) {
+    final oldAmount = _betsMap[horseId] ?? 0;
     setState(() {
       _betsMap[horseId] = newAmount;
     });
+
+    // Mỗi lần user nhấn đặt cược vào con ngựa -> phát money_sound ở giây thứ 2
+    if (newAmount > oldAmount) {
+      AudioService.instance.playBetMoneySound();
+    }
   }
 
   /// Reset toàn bộ cược về 0
@@ -103,6 +111,7 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
   Future<void> _addFreeChips() async {
     final newBalance = _totalBalance + 100;
     await StorageService.saveBalance(newBalance);
+    AudioService.instance.playMoneySound();
     setState(() {
       _totalBalance = newBalance;
     });
@@ -158,6 +167,9 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
       ),
     );
 
+    // Quay lại màn hình đặt cược -> tiếp tục phát nhạc nền BGM
+    AudioService.instance.playBgm();
+
     // Cập nhật lại số dư mới sau khi màn hình ResultScreen pop về
     if (updatedBalance != null) {
       setState(() {
@@ -173,6 +185,9 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
       context,
       MaterialPageRoute(builder: (context) => const DepositScreen()),
     );
+
+    // Đảm bảo nhạc nền BGM tiếp tục phát khi quay về màn hình đặt cược
+    AudioService.instance.playBgm();
 
     // Nếu người chơi thực hiện nạp tiền (có giá trị trả về)
     if (depositedAmount != null && mounted) {

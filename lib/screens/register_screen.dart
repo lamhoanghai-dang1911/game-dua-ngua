@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/audio_service.dart';
 
 /// Màn hình tạo một tài khoản tạm thời để trả về LoginScreen.
 class RegisterScreen extends StatefulWidget {
@@ -13,6 +14,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    AudioService.instance.playLoginBgm();
+  }
 
   @override
   void dispose() {

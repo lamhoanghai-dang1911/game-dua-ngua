@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/login_screen.dart';
+import 'services/audio_service.dart';
 
 /// ============================================================================
 /// MINI RACING GAME – FLUTTER UI PROJECT (GAME ĐUA NGỰA)
@@ -12,9 +13,12 @@ import 'screens/login_screen.dart';
 ///             Navigation (Navigator.push/pop), "Slider giả" (AnimatedPositioned + Container).
 /// ============================================================================
 
-void main() {
+void main() async {
   // Đảm bảo Flutter framework đã sẵn sàng trước khi nạp tài nguyên
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo audio service
+  await AudioService.instance.init();
 
   // Mặc định Home/Result dùng màn hình dọc. RaceScreen sẽ tạm chuyển sang landscape.
   SystemChrome.setPreferredOrientations([

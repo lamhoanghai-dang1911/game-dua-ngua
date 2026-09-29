@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../models/horse_model.dart';
 import '../models/bet_model.dart';
 import '../models/race_result_model.dart';
+import '../services/audio_service.dart';
 import '../widgets/race_rider_canvas.dart';
 import '../widgets/race_track_canvas.dart';
 import 'result_screen.dart';
@@ -69,6 +70,8 @@ class _RaceScreenState extends State<RaceScreen> {
     super.initState();
     _resetTrack();
     _enterLandscapeMode();
+    // Bắt đầu loop nhạc tiếng khán đài sân vận động khi vào trang cuộc đua
+    AudioService.instance.playStadiumAmbiance();
   }
 
   Future<void> _enterLandscapeMode() async {
@@ -106,6 +109,8 @@ class _RaceScreenState extends State<RaceScreen> {
     _startSignalTimer?.cancel();
     _resultTimer?.cancel();
     _restorePortraitMode();
+    // Dọn dẹp toàn bộ âm thanh đường đua
+    AudioService.instance.stopAllRaceSounds();
     super.dispose();
   }
 
@@ -118,6 +123,10 @@ class _RaceScreenState extends State<RaceScreen> {
       _countdown = 3;
       _showStartSignal = false;
     });
+
+    // Khi đếm ngược xuất phát 3 2 1: tiếng stadium_crowd_start_race reo 1 lần và duy trì tiếng sân vận động
+    AudioService.instance.playStartRaceCrowd();
+    AudioService.instance.playStadiumAmbiance();
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -150,6 +159,10 @@ class _RaceScreenState extends State<RaceScreen> {
       _isRacing = true;
     });
 
+    // Trong suốt quá trình ngựa chạy: loop tiếng vó ngựa VÀ tiếng khán đài sân vận động
+    AudioService.instance.startHorseRunning();
+    AudioService.instance.playStadiumAmbiance();
+
     // Mỗi chu kỳ tick 70ms, các ngựa sẽ di chuyển một bước nhỏ hơn để cuộc đua kéo dài ~15 giây
     _raceTimer = Timer.periodic(const Duration(milliseconds: 70), (timer) {
       if (!mounted) {
@@ -160,6 +173,10 @@ class _RaceScreenState extends State<RaceScreen> {
 
       setState(() {
         _stepTick++;
+        if (_stepTick % 20 == 0 && !_isFinished) {
+          AudioService.instance.startHorseRunning();
+          AudioService.instance.playStadiumAmbiance();
+        }
         Horse? localWinner;
         double earliestFinish = double.infinity;
 
@@ -210,6 +227,7 @@ class _RaceScreenState extends State<RaceScreen> {
           _isRacing = false;
           _winnerHorse = localWinner;
           _raceTimer?.cancel();
+          AudioService.instance.stopHorseRunning();
 
           // Chờ thêm một chút để người chơi nhìn rõ khoảnh khắc cán đích rồi chuyển sang ResultScreen
           _resultTimer = Timer(
@@ -264,6 +282,7 @@ class _RaceScreenState extends State<RaceScreen> {
       setState(() {
         _isNavigatingToResult = false;
       });
+      AudioService.instance.playStadiumAmbiance();
     }
   }
 
