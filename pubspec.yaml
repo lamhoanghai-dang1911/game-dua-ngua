@@ -58,6 +58,25 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/racing/stadium.png
+    - assets/racing/horse_red.png
+    - assets/racing/horse_gold.png
+    - assets/racing/horse_blue.png
+    - assets/racing/pov/tracks/track_0.png
+    - assets/racing/pov/tracks/track_1.png
+    - assets/racing/pov/tracks/track_2.png
+    - assets/racing/pov/tracks/track_3.png
+    - assets/racing/pov/tracks/track_4.png
+    - assets/racing/pov/tracks/track_5.png
+    - assets/racing/pov/tracks/track_6.png
+    - assets/racing/pov/horse_red/frames_32_a.png
+    - assets/racing/pov/horse_red/frames_32_b.png
+    - assets/racing/pov/horse_gold/frames_32_a.png
+    - assets/racing/pov/horse_gold/frames_32_b.png
+    - assets/racing/pov/horse_blue/frames_32_a.png
+    - assets/racing/pov/horse_blue/frames_32_b.png
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

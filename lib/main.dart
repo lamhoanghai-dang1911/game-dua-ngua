@@ -16,7 +16,7 @@ void main() {
   // Đảm bảo Flutter framework đã sẵn sàng trước khi nạp tài nguyên
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khóa hướng màn hình dọc để trải nghiệm tốt nhất trên thiết bị di động
+  // Mặc định Home/Result dùng màn hình dọc. RaceScreen sẽ tạm chuyển sang landscape.
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
