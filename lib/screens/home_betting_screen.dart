@@ -5,6 +5,7 @@ import '../services/storage_service.dart';
 import '../widgets/balance_header_card.dart';
 import '../widgets/horse_bet_tile.dart';
 import 'race_screen.dart';
+import 'deposit_screen.dart';
 
 /// ============================================================================
 /// MODULE 4: MÀN HÌNH 1 - HOME / BETTING SCREEN
@@ -166,6 +167,32 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
     }
   }
 
+  Future<void> _navigateToDeposit() async {
+    // Navigator.push trả về giá trị int (số xu) khi trang DepositScreen pop
+    final depositedAmount = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(builder: (context) => const DepositScreen()),
+    );
+
+    // Nếu người chơi thực hiện nạp tiền (có giá trị trả về)
+    if (depositedAmount != null && mounted) {
+      setState(() {
+        _totalBalance += depositedAmount; // Cộng xu vào tài khoản
+      });
+
+      // Lưu lại vào Storage để không bị mất khi thoát app
+      await StorageService.saveBalance(_totalBalance);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 Nạp thành công $depositedAmount xu! Số dư mới: $_totalBalance'),
+          backgroundColor: const Color(0xFF16A34A),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -198,6 +225,12 @@ class _HomeBettingScreenState extends State<HomeBettingScreen> {
         backgroundColor: const Color(0xFF0F172A),
         elevation: 0,
         actions: [
+          // Nút Nạp tiền mới
+          IconButton(
+            icon: const Icon(Icons.add_card_rounded, color: Color(0xFF4ADE80)),
+            tooltip: 'Nạp thêm xu',
+            onPressed: _navigateToDeposit,
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline_rounded, color: Color(0xFF94A3B8)),
             tooltip: 'Luật chơi & Tỷ lệ',
