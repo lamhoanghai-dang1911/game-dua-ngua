@@ -159,9 +159,8 @@ class _RaceScreenState extends State<RaceScreen> {
       _isRacing = true;
     });
 
-    // Trong suốt quá trình ngựa chạy: loop tiếng vó ngựa VÀ tiếng khán đài sân vận động
-    AudioService.instance.startHorseRunning();
-    AudioService.instance.playStadiumAmbiance();
+    // Trong suốt quá trình ngựa chạy: loop song song tiếng vó ngựa VÀ tiếng khán đài sân vận động
+    AudioService.instance.startRaceRunningSounds();
 
     // Mỗi chu kỳ tick 70ms, các ngựa sẽ di chuyển một bước nhỏ hơn để cuộc đua kéo dài ~15 giây
     _raceTimer = Timer.periodic(const Duration(milliseconds: 70), (timer) {
@@ -174,8 +173,7 @@ class _RaceScreenState extends State<RaceScreen> {
       setState(() {
         _stepTick++;
         if (_stepTick % 20 == 0 && !_isFinished) {
-          AudioService.instance.startHorseRunning();
-          AudioService.instance.playStadiumAmbiance();
+          AudioService.instance.startRaceRunningSounds();
         }
         Horse? localWinner;
         double earliestFinish = double.infinity;
@@ -1193,197 +1191,6 @@ class _RaceScreenState extends State<RaceScreen> {
         _isExitDialogOpen = false;
       });
     }
-  }
-
-  void _showVictoryPopup({
-    required BuildContext context,
-    required dynamic winnerHorse,
-    required bool isUserWinner,
-    required int netProfit,
-    required int finalBalance,
-    required VoidCallback onPlayAgain,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Bắt buộc chọn nút bấm mới đóng được popup
-      builder: (BuildContext ctx) {
-        return Dialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isUserWinner
-                    ? const Color(0xFFFFD700)
-                    : const Color(0xFF475569),
-                width: 2,
-              ),
-            ),
-            child: Column(
-              mainAxisSize:
-                  MainAxisSize.min, // Kích thước ôm sát nội dung kiểu popup
-              children: [
-                // 1. Icon Cúp vàng vinh danh
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isUserWinner
-                        ? const Color(0xFFFFD700).withAlpha(30)
-                        : const Color(0xFF64748B).withAlpha(30),
-                  ),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: isUserWinner
-                        ? const Color(0xFFFFD700)
-                        : const Color(0xFF94A3B8),
-                    size: 56,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 2. Trạng thái Thắng / Thua
-                Text(
-                  isUserWinner
-                      ? '🎉 CHIẾN THẮNG RỰC RỠ! 🎉'
-                      : 'KẾT QUẢ VÒNG ĐUA',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isUserWinner
-                        ? const Color(0xFFFBBF24)
-                        : Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // 3. Thông tin chiến mã về nhất
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: winnerHorse.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${winnerHorse.name} về Nhất',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 4. Biến động số dư xu của người chơi
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        const Text(
-                          'Biến động',
-                          style: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isUserWinner ? '+$netProfit xu' : '$netProfit xu',
-                          style: TextStyle(
-                            color: isUserWinner
-                                ? const Color(0xFF4ADE80)
-                                : const Color(0xFFEF4444),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      width: 1,
-                      height: 30,
-                      color: const Color(0xFF334155),
-                    ),
-                    Column(
-                      children: [
-                        const Text(
-                          'Số dư mới',
-                          style: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$finalBalance xu',
-                          style: const TextStyle(
-                            color: Color(0xFFFBBF24),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // 5. Nút bấm tương tác
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx); // Đóng popup kết quả trước
-                      onPlayAgain(); // Kích hoạt callback để tiếp tục hoặc thoát về trang cược
-                    },
-                    icon: const Icon(Icons.replay_rounded, color: Colors.white),
-                    label: const Text(
-                      'TIẾP TỤC TRẢI NGHIỆM 🏇',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 }
 

@@ -59,7 +59,11 @@ class AudioService {
           focus: AudioContextConfigFocus.mixWithOthers,
         ).build(),
       );
+    } catch (e) {
+      debugPrint('[AudioService] setAudioContext notice: $e');
+    }
 
+    try {
       await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
       await _stadiumPlayer.setReleaseMode(ReleaseMode.loop);
       await _runningPlayer.setReleaseMode(ReleaseMode.loop);
@@ -88,8 +92,8 @@ class AudioService {
     _isMuted = muted;
     try {
       await _bgmPlayer.setVolume(muted ? 0.0 : 0.5);
-      await _stadiumPlayer.setVolume(muted ? 0.0 : 0.75);
-      await _runningPlayer.setVolume(muted ? 0.0 : 1.0);
+      await _stadiumPlayer.setVolume(muted ? 0.0 : 0.95);
+      await _runningPlayer.setVolume(muted ? 0.0 : 0.85);
       await _sfxPlayer.setVolume(muted ? 0.0 : 1.0);
       await _betSoundPlayer.setVolume(muted ? 0.0 : 1.0);
     } catch (e) {
@@ -140,7 +144,9 @@ class AudioService {
   /// Dừng nhạc nền
   Future<void> stopBgm() async {
     try {
-      await _bgmPlayer.stop();
+      if (_isBgmPlaying || _bgmPlayer.state == PlayerState.playing) {
+        await _bgmPlayer.stop();
+      }
       _isBgmPlaying = false;
       _currentBgmTrack = null;
     } catch (e) {
@@ -150,15 +156,18 @@ class AudioService {
 
   /// 2. Vào trang cuộc đua -> Dừng BGM, loop tiếng sân vận động stadium_ambiance trong suốt cuộc đua
   Future<void> playStadiumAmbiance() async {
-    await stopBgm();
+    if (_isBgmPlaying) {
+      await stopBgm();
+    }
     _isStadiumPlaying = true;
     if (_isMuted) return;
     try {
       if (_stadiumPlayer.state == PlayerState.playing) {
+        await _stadiumPlayer.setVolume(_isMuted ? 0.0 : 0.95);
         return;
       }
       await _stadiumPlayer.setReleaseMode(ReleaseMode.loop);
-      await _stadiumPlayer.setVolume(_isMuted ? 0.0 : 0.75);
+      await _stadiumPlayer.setVolume(_isMuted ? 0.0 : 0.95);
       await _stadiumPlayer.play(AssetSource(stadiumAmbiancePath));
     } catch (e) {
       debugPrint('[AudioService] playStadiumAmbiance error: $e');
@@ -199,13 +208,40 @@ class AudioService {
     if (_isMuted) return;
     try {
       if (_runningPlayer.state == PlayerState.playing) {
+        await _runningPlayer.setVolume(_isMuted ? 0.0 : 0.85);
         return;
       }
       await _runningPlayer.setReleaseMode(ReleaseMode.loop);
-      await _runningPlayer.setVolume(_isMuted ? 0.0 : 1.0);
+      await _runningPlayer.setVolume(_isMuted ? 0.0 : 0.85);
       await _runningPlayer.play(AssetSource(horseRunningPath));
     } catch (e) {
       debugPrint('[AudioService] startHorseRunning error: $e');
+    }
+  }
+
+  /// 3c. Phát song song tiếng khán đài sân vận động (stadium_ambiance) 
+  /// và tiếng vó ngựa (horse_running) trong suốt quá trình ngựa chạy đua
+  Future<void> startRaceRunningSounds() async {
+    _isRunningPlaying = true;
+    _isStadiumPlaying = true;
+    if (_isMuted) return;
+
+    try {
+      // 1. Tiếng sân vận động stadium_ambiance (phát song song ở chế độ loop)
+      await _stadiumPlayer.setReleaseMode(ReleaseMode.loop);
+      await _stadiumPlayer.setVolume(_isMuted ? 0.0 : 0.95);
+      if (_stadiumPlayer.state != PlayerState.playing) {
+        await _stadiumPlayer.play(AssetSource(stadiumAmbiancePath));
+      }
+
+      // 2. Tiếng vó ngựa horse_running (phát song song ở chế độ loop)
+      await _runningPlayer.setReleaseMode(ReleaseMode.loop);
+      await _runningPlayer.setVolume(_isMuted ? 0.0 : 0.85);
+      if (_runningPlayer.state != PlayerState.playing) {
+        await _runningPlayer.play(AssetSource(horseRunningPath));
+      }
+    } catch (e) {
+      debugPrint('[AudioService] startRaceRunningSounds error: $e');
     }
   }
 
